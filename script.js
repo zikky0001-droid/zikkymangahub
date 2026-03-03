@@ -194,44 +194,20 @@ function toggleMenu() {
     }
 }
 
-// Format rating from MangaDex data
-function formatRating(manga) {
-    try {
-        // MangaDex rating is between 0-10 already
-        const rating = manga.attributes?.rating;
-        if (!rating) return null;
-        
-        // Use bayesian rating if available (most accurate)
-        const bayesianRating = rating.bayesian;
-        const meanRating = rating.mean;
-        
-        // Get vote count from distribution
-        let voteCount = 0;
-        if (rating.distribution) {
-            voteCount = Object.values(rating.distribution).reduce((a, b) => a + b, 0);
-        }
-        
-        if (bayesianRating && bayesianRating > 0) {
-            return {
-                score: bayesianRating.toFixed(1),
-                votes: voteCount,
-                display: bayesianRating.toFixed(1)
-            };
-        } else if (meanRating && meanRating > 0) {
-            return {
-                score: meanRating.toFixed(1),
-                votes: voteCount,
-                display: meanRating.toFixed(1)
-            };
-        }
-        return null;
-    } catch (error) {
-        console.error('Error formatting rating:', error);
-        return null;
-    }
+// Get Genre ID
+function getGenreId(genre) {
+    const genreMap = {
+        'action': '391b0423-d847-456f-aff0-8b0cfc03066b',
+        'romance': '423e2eae-a7a2-4a8b-ac03-a8351462d71d',
+        'fantasy': 'cdc58593-87c6-4c3b-b4f6-b2c5c5f2e0d8',
+        'comedy': '4d32cc48-9f00-4cca-9b5a-a839f0764984',
+        'adventure': 'f4122d1c-3b44-44d0-9936-ff7502c39ad3',
+        'horror': '0a39b5b1-b88e-4ec2-9d0c-f69aceaa7da9'
+    };
+    return genreMap[genre];
 }
 
-// Load Manga from API
+// ============== FIXED: Load Manga (No statistics API) ==============
 async function loadManga() {
     if (isLoading || !hasMoreResults) return;
     
@@ -239,8 +215,7 @@ async function loadManga() {
     if (loadingIndicator) loadingIndicator.style.display = 'block';
 
     try {
-        // Build URL with proper parameters
-        let url = `${BASE_URL}/manga?limit=20&offset=${currentOffset}&includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&availableTranslatedLanguage[]=en`;
+        let url = `${BASE_URL}/manga?limit=20&offset=${currentOffset}&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&availableTranslatedLanguage[]=en`;
         
         if (currentQuery) {
             url += `&title=${encodeURIComponent(currentQuery)}`;
@@ -263,7 +238,7 @@ async function loadManga() {
             return;
         }
 
-        await displayManga(data.data);
+        displayManga(data.data);
         currentOffset += 20;
         
         if (data.data.length < 20) {
@@ -279,34 +254,9 @@ async function loadManga() {
     }
 }
 
-// Get Genre ID
-function getGenreId(genre) {
-    const genreMap = {
-        'action': '391b0423-d847-456f-aff0-8b0cfc03066b',
-        'romance': '423e2eae-a7a2-4a8b-ac03-a8351462d71d',
-        'fantasy': 'cdc58593-87c6-4c3b-b4f6-b2c5c5f2e0d8',
-        'comedy': '4d32cc48-9f00-4cca-9b5a-a839f0764984',
-        'adventure': 'f4122d1c-3b44-44d0-9936-ff7502c39ad3',
-        'horror': '0a39b5b1-b88e-4ec2-9d0c-f69aceaa7da9'
-    };
-    return genreMap[genre];
-}
-
-// Display Manga Grid
-async function displayManga(mangaList) {
+// ============== FIXED: Display Manga (No statistics) ==============
+function displayManga(mangaList) {
     if (!resultsContainer) return;
-    
-    // Fetch statistics for all manga in batch
-    const mangaIds = mangaList.map(m => m.id).join(',');
-    let statsData = {};
-    
-    try {
-        const statsResponse = await fetch(`${BASE_URL}/statistics/manga?manga=${mangaIds}`);
-        const stats = await statsResponse.json();
-        statsData = stats.statistics || {};
-    } catch (error) {
-        console.error('Error fetching stats:', error);
-    }
     
     mangaList.forEach(manga => {
         const coverFileName = manga.relationships.find(r => r.type === 'cover_art')?.attributes?.fileName;
@@ -314,18 +264,9 @@ async function displayManga(mangaList) {
         
         const title = manga.attributes.title.en || Object.values(manga.attributes.title)[0] || 'Unknown Title';
         
-        // Get stats for this manga
-        const mangaStats = statsData[manga.id] || {};
-        const rating = mangaStats.rating || {};
-        const follows = mangaStats.follows || 0;
-        
-        // Format rating
-        let ratingDisplay = 'N/A';
-        if (rating.bayesian) {
-            ratingDisplay = rating.bayesian.toFixed(1);
-        } else if (rating.average) {
-            ratingDisplay = rating.average.toFixed(1);
-        }
+        // Use basic rating from manga object (no statistics API)
+        const rating = manga.attributes.rating?.average || null;
+        const ratingDisplay = rating ? rating.toFixed(1) : 'N/A';
         
         const card = document.createElement('div');
         card.className = 'manga-card';
@@ -336,7 +277,7 @@ async function displayManga(mangaList) {
                 <div class="manga-title">${title}</div>
                 <div class="manga-stats">
                     <span><i class="fas fa-star" style="color: #ffd700;"></i> ${ratingDisplay}</span>
-                    <span><i class="fas fa-heart"></i> ${follows}</span>
+                    <span><i class="fas fa-calendar"></i> ${manga.attributes.year || 'N/A'}</span>
                 </div>
             </div>
         `;
@@ -346,24 +287,19 @@ async function displayManga(mangaList) {
     });
 }
 
-// Open Manga Details Page
+// ============== FIXED: Open Manga Details (No statistics API) ==============
 async function openMangaDetails(mangaId, title) {
     selectedManga = { id: mangaId, title };
     
     try {
         showToast('Loading manga details...', 'info');
         
-        // Fetch manga details
+        // Fetch manga details (without statistics)
         const response = await fetch(`${BASE_URL}/manga/${mangaId}?includes[]=cover_art&includes[]=author&includes[]=artist&includes[]=tag`);
         if (!response.ok) throw new Error('Failed to fetch manga details');
         const data = await response.json();
         
-        // Fetch manga statistics
-        const statsResponse = await fetch(`${BASE_URL}/statistics/manga/${mangaId}`);
-        if (!statsResponse.ok) throw new Error('Failed to fetch statistics');
-        const statsData = await statsResponse.json();
-        
-        // Fetch chapters with proper counting
+        // Fetch chapters
         currentChapters = await fetchAllChapters(mangaId);
         
         // Hide main container and show details page
@@ -371,11 +307,11 @@ async function openMangaDetails(mangaId, title) {
         if (detailsPage) detailsPage.style.display = 'block';
         document.body.style.overflow = 'auto';
         
-        // Display details
-        displayMangaDetails(data.data, statsData.statistics?.[mangaId]);
+        // Display details (without statistics)
+        displayMangaDetails(data.data);
     } catch (error) {
         console.error('Error opening manga:', error);
-        showToast('Failed to load manga details: ' + error.message, 'error');
+        showToast('Failed to load manga details', 'error');
     }
 }
 
@@ -401,16 +337,9 @@ async function fetchAllChapters(mangaId) {
                 break;
             }
             
-            // Filter out duplicate chapters and sort properly
-            const validChapters = data.data.filter(ch => {
-                // Filter out chapters with no chapter number
-                return ch.attributes.chapter !== null && ch.attributes.chapter !== undefined;
-            });
-            
-            allChapters = [...allChapters, ...validChapters];
+            allChapters = [...allChapters, ...data.data];
             offset += limit;
             
-            // Check if we've got all chapters
             if (data.total && offset >= data.total) {
                 hasMore = false;
             }
@@ -431,8 +360,8 @@ async function fetchAllChapters(mangaId) {
     return allChapters;
 }
 
-// Display Manga Details
-function displayMangaDetails(manga, stats) {
+// ============== FIXED: Display Manga Details (No statistics) ==============
+function displayMangaDetails(manga) {
     const wrapper = document.getElementById('mangaDetailsWrapper');
     if (!wrapper) return;
     
@@ -444,28 +373,12 @@ function displayMangaDetails(manga, stats) {
     const author = manga.relationships.find(r => r.type === 'author')?.attributes?.name || 'Unknown';
     const artist = manga.relationships.find(r => r.type === 'artist')?.attributes?.name || 'Unknown';
     
-    // Safely extract statistics
-    const rating = stats?.rating || {};
-    const follows = stats?.follows || 0;
-    const comments = stats?.comments?.count || 0;
+    // Use basic rating from manga object
+    const rating = manga.attributes.rating?.average || null;
+    const ratingValue = rating ? rating.toFixed(1) : 'N/A';
     
-    // Calculate rating display
-    let ratingValue = 'N/A';
-    let voteCount = 0;
-    
-    if (rating.bayesian) {
-        ratingValue = rating.bayesian.toFixed(1);
-    } else if (rating.average) {
-        ratingValue = rating.average.toFixed(1);
-    }
-    
-    // Get vote count from distribution
-    if (rating.distribution) {
-        voteCount = Object.values(rating.distribution).reduce((a, b) => a + b, 0);
-    }
-    
-    // Generate star rating
-    const starRating = ratingValue !== 'N/A' ? Math.round(parseFloat(ratingValue) / 2) : 0;
+    // Generate simple star rating
+    const starRating = rating ? Math.round(rating / 2) : 0;
     const stars = '★'.repeat(starRating) + '☆'.repeat(5 - starRating);
     
     wrapper.innerHTML = `
@@ -480,11 +393,6 @@ function displayMangaDetails(manga, stats) {
                     <div class="rating-score">
                         <span class="rating-value">${ratingValue}</span>
                         <span class="rating-stars">${stars}</span>
-                    </div>
-                    <div class="rating-details">
-                        <span><i class="fas fa-users"></i> ${follows.toLocaleString()} follows</span>
-                        <span><i class="fas fa-vote-yea"></i> ${voteCount.toLocaleString()} votes</span>
-                        <span><i class="fas fa-comments"></i> ${comments.toLocaleString()} comments</span>
                     </div>
                 </div>
                 
@@ -513,10 +421,6 @@ function displayMangaDetails(manga, stats) {
                         <span class="info-label"><i class="fas fa-globe"></i> Status:</span>
                         <span class="info-value">${manga.attributes.status || 'Unknown'}</span>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label"><i class="fas fa-language"></i> Language:</span>
-                        <span class="info-value">${manga.attributes.originalLanguage?.toUpperCase() || 'Unknown'}</span>
-                    </div>
                 </div>
                 
                 <div class="details-tags">
@@ -543,15 +447,11 @@ function displayMangaDetails(manga, stats) {
                     currentChapters.map((ch, index) => {
                         const chapterNum = ch.attributes.chapter || (index + 1);
                         const chapterTitle = ch.attributes.title || '';
-                        const pages = ch.attributes.pages || 0;
-                        const uploaded = ch.attributes.publishAt ? new Date(ch.attributes.publishAt).toLocaleDateString() : 'Unknown';
                         return `
                             <div class="chapter-item" data-chapter-index="${index}">
                                 <div class="chapter-info">
                                     <span class="chapter-number">Chapter ${chapterNum}</span>
                                     ${chapterTitle ? `<span class="chapter-title">${chapterTitle}</span>` : ''}
-                                    <span class="chapter-pages"><i class="far fa-file-image"></i> ${pages} pages</span>
-                                    <span class="chapter-date"><i class="far fa-calendar-alt"></i> ${uploaded}</span>
                                 </div>
                                 <div class="chapter-actions">
                                     <button class="chapter-action-btn read-chapter" data-index="${index}" title="Read">
@@ -719,7 +619,6 @@ function showDownloadOptions(index) {
         downloadChapterInfo.innerHTML = `
             <h4>Chapter ${selectedChapter.number}</h4>
             <p>${selectedManga.title}</p>
-            <small>Pages: ${currentChapters[index].attributes.pages || '?'}</small>
         `;
     }
     
