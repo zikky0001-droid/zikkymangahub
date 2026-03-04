@@ -14,7 +14,8 @@
 ---
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=28&duration=3000&pause=500&color=8B17B6&center=true&vCenter=true&width=500&lines=𝐑𝐞𝐚𝐝+𝐌𝐚𝐧𝐡𝐰𝐚+𝐅𝐫𝐞𝐞;𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝+𝐂𝐡𝐚𝐩𝐭𝐞𝐫𝐬;𝐁𝐨𝐨𝐤𝐦𝐚𝐫𝐤+𝐘𝐨𝐮𝐫+𝐅𝐚𝐯𝐨𝐫𝐢𝐭𝐞𝐬;𝐍𝐞𝐨𝐧+𝐔𝐈+𝐃𝐞𝐬𝐢𝐠𝐧" alt="Typing SVG" />
+  <h1 align="center">
+  <img src="https://readme-typing-svg.herokuapp.com/?font=Fira+Code&size=25&duration=3000&color=00FF00&background=000000&center=true&vCenter=true&width=600&lines=𝐑𝐞𝐚𝐝+𝐌𝐚𝐧𝐡𝐰𝐚+𝐅𝐫𝐞𝐞;𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝+𝐂𝐡𝐚𝐩𝐭𝐞𝐫𝐬;𝐁𝐨𝐨𝐤𝐦𝐚𝐫𝐤+𝐘𝐨𝐮𝐫+𝐅𝐚𝐯𝐨𝐫𝐢𝐭𝐞𝐬;𝐍𝐞𝐨𝐧+𝐔𝐈+𝐃𝐞𝐬𝐢𝐠𝐧" alt="Typing SVG" />
 </p>
 
 <div align="center">
@@ -53,19 +54,9 @@
 
 <div align="center">
 
-```javascript
-const zikkyManga = {
-  mission: "📚 𝑩𝒓𝒊𝒏𝒈 𝒕𝒉𝒆 𝒃𝒆𝒔𝒕 𝒎𝒂𝒏𝒉𝒘𝒂 𝒕𝒐 𝒆𝒗𝒆𝒓𝒚𝒐𝒏𝒆",
-  technology: "🚀 Node.js + Express + MangaDex API",
-  design: "🎨 Neon Cyberpunk Aesthetic",
-  vibe: "⚡ 𝑷𝒖𝒓𝒆 𝑬𝒏𝒆𝒓𝒈𝒚"
-};
-```
-
-</div>
-
 ZIKKY MANGA HUB is a premium web application that lets you discover, read, and download thousands of manhwa, manga, and webtoons completely free. Built with love for manga enthusiasts worldwide! 🌍
 
+</div>
 ---
 
 🛠️ 𝑻𝒆𝒄𝒉 𝑺𝒕𝒂𝒄𝒌
